@@ -106,7 +106,7 @@ td.itemDesc {
 	width: 30%;
 }
 
-input, .brython-dialog-button {
+input, select, .brython-dialog-button {
 	width: 100px;
 	font-family: ibm;
 	font-size: 14pt;
@@ -166,6 +166,19 @@ button {
 	width: auto;
 }
 
+select {
+	width: 160px;
+	appearance: none;
+	border: 4px outset var(--colorInputBorder);
+	border-radius: 2px;
+	box-shadow: 0px 4px var(--colorButtonShadow);
+	background-color: var(--colorInputBGActive);
+	background-image: url(/static/favicon.downArrow.ico);
+	background-repeat: no-repeat;
+	background-size: 16pt;
+	background-position: center right;
+}
+
 .selectIcon {
 	font-size: 24pt;
 	margin-bottom: 4px;
@@ -180,7 +193,7 @@ button {
 	bottom: 2px;
 }
 
-input[type = "button"]:active:not([disabled]), .brython-dialog-button:active, button:active {
+input[type = "button"]:active:not([disabled]), .brython-dialog-button:active, button:active, select:hover {
 	border-style: inset;
 	transform: translateY(4px);
 	box-shadow: 0px 0px;
@@ -259,7 +272,7 @@ input#description, #name.bio, #race.bio {
 #controls {
 	text-align: center;
 	grid-row-start: 1;
-	grid-column-start: 2;
+	grid-column: 2 / span 2;
 }
 
 .abilityDiv {

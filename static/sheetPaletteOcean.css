@@ -1,0 +1,15 @@
+:root {
+	--colorBackground: midnightblue;
+	--colorDivBorder: cornflowerblue;
+	--colorDialogBorder: cornflowerblue;
+	--colorDialogShadow: dodgerblue;
+	--colorInputBorder: skyblue;
+	--colorInputBGActive: deepskyblue;
+	--colorButtonShadow: dodgerblue;
+	--colorTableHeadBorder: slateblue;
+	--colorTableDataBorder: slateblue;
+}
+
+input, div, td, th {
+	color: white;
+}

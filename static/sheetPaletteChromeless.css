@@ -1,0 +1,16 @@
+:root {
+	--colorBackground: white;
+	--colorDivBorder: gray;
+	--colorDialogBorder: darkgray;
+	--colorDialogShadow: dimgray;
+	--colorInputBorder: gray;
+	--colorInputBGActive: gainsboro;
+	--colorButtonShadow: dimgray;
+	--colorTableHeadBorder: slategray;
+	--colorTableDataBorder: slategray;
+}
+/*
+input, div, td, th {
+	color: white;
+}
+*/

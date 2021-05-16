@@ -350,6 +350,10 @@ def index():
 
 # App Rule Instanctiation
 base.add_url_rule('/', "index", index)
+base.add_url_rule(
+	"/favicon.ico", "favicon",
+	lambda : fl.send_from_directory("./static/", "favicon.ico")
+)
 base.add_url_rule("/login/", "login", login, methods = ("GET", "POST"))
 base.add_url_rule("/logout/", "logout", logout)
 base.add_url_rule("/user/", "userpage", userpage, methods = ("GET", "POST"))

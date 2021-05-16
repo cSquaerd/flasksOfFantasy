@@ -1574,6 +1574,23 @@ for r in document.select("input[name = \"sortItems\"]"):
 	r.bind("change", itemSortHelper)
 
 # GENERAL/NETWORK/OTHER FUNCTIONS
+def changePalette(event):
+	newPalette = document["palette"].value
+	if newPalette == "default" and len(document.select("#paletteLink")) > 0:
+		del document["paletteLink"]
+	elif len(document.select("#paletteLink")) == 0:
+		styleLink = html.LINK()
+		styleLink.id = "paletteLink"
+		styleLink.rel = "stylesheet"
+		styleLink.href = "/static/sheetPalette" + newPalette.capitalize() + ".css"
+		document.select("head")[0] <= styleLink
+	else:
+		document["paletteLink"].href = "/static/sheetPalette" + \
+			newPalette.capitalize() + ".css"
+
+
+document["palette"].bind("input", changePalette)
+
 def reloadValues(refreshTables = True):
 	global data
 	for k in data["biography"].keys():
