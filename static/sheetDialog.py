@@ -325,3 +325,16 @@ def spellTableCreate() -> dialog.Dialog:
 	d.panel <= html.P("Select a class that does not yet have a spell table:")
 
 	return d
+
+def spellTableSetMaxLevel(className : str, currentMaxLevel : int) -> dialog.Dialog:
+	d = dialog.Dialog(
+		"Maximum " + className + " Spell Level",
+		ok_cancel = True, default_css = False
+	)
+	d.panel <= html.P("Enter a new maximum spell level (1 to 9 inclusive):")
+	d.panel <= html.INPUT(
+		id = "newMaxSpellLevel", type = "number", min = 1, max = 9,
+		value = currentMaxLevel
+	)
+
+	return d

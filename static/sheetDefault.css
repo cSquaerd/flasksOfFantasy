@@ -311,6 +311,11 @@ input#description, #name.bio, #race.bio {
 	grid-column-start: 1;
 }
 
+.spellTable {
+	border: none;
+	margin: 0px;
+}
+
 /*
 #biographyCosmetic {
 	display: grid;

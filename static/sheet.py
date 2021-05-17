@@ -1626,6 +1626,41 @@ def adjustSpellTable(event):
 
 document["Create Spell List``NewTable"].bind("click", adjustSpellTable)
 
+def adjustMaxSpellLevel(className : str):
+	spellTableData = data["spells"][className]
+	d = spellTableSetMaxLevel(className, len(spellTableData["slots"].keys()))
+
+	def okHandler(event):
+		try:
+			newMax = int(d.select("#newMaxSpellLevel")[0].value)
+		except ValueError:
+			return
+
+		if newMax < 1 or newMax > 9:
+			#print("OUT OF BOUNDS")
+			return
+		
+		oldMax = len(spellTableData["slots"].keys())
+		if newMax < oldMax:
+			#print("LESS")
+			for l in range(newMax + 1, oldMax + 1):
+				#print(l)
+				del spellTableData["slots"][str(l)]
+		elif newMax > oldMax:
+			#print("MORE")
+			for l in range(oldMax + 1, newMax + 1):
+				#print(l)
+				spellTableData["slots"][str(l)] = {
+					"current": 1,
+					"max": 1
+				}
+
+		d.close()
+		if newMax != oldMax:
+			updateSpellTableSlots(className)
+
+	d.ok_button.bind("click", okHandler)
+
 def calculateSpellAttackBonus(ability : str) -> int:
 	return int(document[ability + "Bonus"].value) + data["proficiency"]["bonus"]
 
@@ -1650,21 +1685,21 @@ def refreshSpellTableStatistics(className: str):
 def updateSpellTableSlots(className : str):
 	stID = className + "`SpellTable"
 	spellTableData = data["spells"][className]
-	if stID + "`SlotsTable" in document:
-		del document[stID + "`SlotsTable"]
+	
+	if stID + "`SlotsTableHeader" in document:
+		del document[stID + "`SlotsTableHeader"]
+	if stID + "`SlotsTableBody" in document:
+		del document[stID + "`SlotsTableBody"]
 
-	table = html.TABLE(id = stID + "`SlotsTable")
-	tableHeader = html.THEAD()
+	table = document[stID + "`SlotsTable"]
+	tableHeader = html.THEAD(id = stID + "`SlotsTableHeader")
 	tableBody = html.TBODY(id = stID + "`SlotsTableBody")
 
 	headerRow = html.TR()
 	headerRow <= html.TH("Spell Slots")
-	for k in sorted(spellTableData["slots"].keys()):
+	for k in sorted(data["spells"][className]["slots"].keys()):
 		headerRow <= html.TH("Level " + k)
-
 	tableHeader <= headerRow
-
-	table <= tableHeader
 	
 	currentRow = html.TR()
 	currentRow <= html.TD(html.B("Current Slots"))
@@ -1690,10 +1725,8 @@ def updateSpellTableSlots(className : str):
 		)
 	tableBody <= maxRow
 
+	table <= tableHeader
 	table <= tableBody
-
-	document[stID] <= table
-
 
 def updateSpellTableSpells(className : str):
 	stID = className + "`SpellTable"
@@ -1724,10 +1757,14 @@ def updateSpellTable(className : str):
 		"Edit Max Spell Slots", For = stID + "`ToggleMaxSlotEdit"
 	)
 	spellTableDiv <= html.INPUT(id = stID + "`ToggleMaxSlotEdit", type = "checkbox")
-	spellTableDiv <= html.INPUT(
+	setMaxSpellLevelButton = html.INPUT(
 		id = stID + "`SetMaxSpellLevel", type = "button",
 		value = "Set Maximum Spell Level"
 	)
+	setMaxSpellLevelButton.bind("click", lambda e : adjustMaxSpellLevel(className))
+	spellTableDiv <= setMaxSpellLevelButton
+
+	spellTableDiv <= html.TABLE(id = stID + "`SlotsTable")
 
 	document["spellTablesDiv"] <= spellTableDiv
 	refreshSpellTableStatistics(className)
@@ -1736,7 +1773,7 @@ def updateSpellTable(className : str):
 def updateSpellTables():
 	for d in document.select(".spellTable"):
 		del document[d.id]
-	for c in data["spells"]:
+	for c in sorted(data["spells"].keys()):
 		print(c)
 		if c not in data["biography"]["class"]:
 			continue
