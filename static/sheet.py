@@ -1573,6 +1573,176 @@ def updateItemsTable(sortReverse = False):
 for r in document.select("input[name = \"sortItems\"]"):
 	r.bind("change", itemSortHelper)
 
+# SPELL TABLE FUNCTIONS
+def adjustSpellTable(event):
+	method = event.target.id.split('`')[2]
+	if method == "NewTable":
+		createDialog = spellTableCreate()
+		for k in data["biography"]["class"]:
+			tempRadioButton = html.INPUT(
+				id = k + "`spellTableRadioButton", value = k, name = "class",
+				type = "radio"
+			)
+			if k in data["spells"].keys():
+				tempRadioButton.attrs["disabled"] = ''
+			createDialog.panel <= tempRadioButton
+			createDialog.panel <= html.LABEL(k, For = k + "`spellTableRadioButton")
+			createDialog.panel <= html.BR()
+
+		def okHandler(e):
+			className = ''
+			spellcastingAbility = ''
+			for r in createDialog.select("input[name = \"class\"]"):
+				#print(r)
+				if r.checked:
+					className = r.value
+					break
+			for r in createDialog.select("input[name = \"ability\"]"):
+				#print(r)
+				if r.checked:
+					spellcastingAbility = r.value
+					break
+
+			print(className, spellcastingAbility)
+
+			if className == '' or spellcastingAbility == '':
+				return
+
+			data["spells"][className] = {
+				"ability": spellcastingAbility,
+				"prepared": 0,
+				"slots": {
+					"1": {
+						"current": 1,
+						"max": 1
+					}
+				},
+				"spells": {}
+			}
+			createDialog.close()
+			updateSpellTables()
+
+		createDialog.ok_button.bind("click", okHandler)
+
+document["Create Spell List``NewTable"].bind("click", adjustSpellTable)
+
+def calculateSpellAttackBonus(ability : str) -> int:
+	return int(document[ability + "Bonus"].value) + data["proficiency"]["bonus"]
+
+def calculateSpellSaveDC(ability : str) -> int:
+	return 8 + calculateSpellAttackBonus(ability)
+
+def refreshSpellAttackAndDC(className : str):
+	stID = className + "`SpellTable"
+	if stID in document:
+		spellTableData = data["spells"][className]
+		attackBonus = calculateSpellAttackBonus(spellTableData["ability"])
+		spellSaveDC = calculateSpellSaveDC(spellTableData["ability"])
+
+		document[stID + "`AttackBonus"].value = attackBonus
+		document[stID + "`SpellSaveDC"].value = spellSaveDC
+
+def refreshSpellTableStatistics(className: str):
+	stID = className + "`SpellTable"
+	document[stID + "`PreparedSpells"].value = data["spells"][className]["prepared"]
+	refreshSpellAttackAndDC(className)
+
+def updateSpellTableSlots(className : str):
+	stID = className + "`SpellTable"
+	spellTableData = data["spells"][className]
+	if stID + "`SlotsTable" in document:
+		del document[stID + "`SlotsTable"]
+
+	table = html.TABLE(id = stID + "`SlotsTable")
+	tableHeader = html.THEAD()
+	tableBody = html.TBODY(id = stID + "`SlotsTableBody")
+
+	headerRow = html.TR()
+	headerRow <= html.TH("Spell Slots")
+	for k in sorted(spellTableData["slots"].keys()):
+		headerRow <= html.TH("Level " + k)
+
+	tableHeader <= headerRow
+
+	table <= tableHeader
+	
+	currentRow = html.TR()
+	currentRow <= html.TD(html.B("Current Slots"))
+	for k in sorted(spellTableData["slots"].keys()):
+		currentRow <= html.TD(
+			html.INPUT(
+				id = stID + "`SlotsCurrent`" + k, type = "number",
+				min = 0, max = spellTableData["slots"][k]["max"],
+				value = spellTableData["slots"][k]["current"]
+			)
+		)
+	tableBody <= currentRow
+
+	maxRow = html.TR()
+	maxRow <= html.TD(html.B("Max Slots"))
+	for k in sorted(spellTableData["slots"].keys()):
+		maxRow <= html.TD(
+			html.INPUT(
+				id = stID + "`SlotsMax`" + k, type = "number", min = 1,
+				value = spellTableData["slots"][k]["max"],
+				readonly = ''
+			)
+		)
+	tableBody <= maxRow
+
+	table <= tableBody
+
+	document[stID] <= table
+
+
+def updateSpellTableSpells(className : str):
+	stID = className + "`SpellTable"
+
+def updateSpellTable(className : str):
+	stID = className + "`SpellTable"
+
+	spellTableDiv = html.DIV(Class = "spellTable", id = stID)
+	spellTableDiv <= html.H3(className)
+
+	spellTableDiv <= html.LABEL("Spell Attack Bonus", For = stID + "`AttackBonus")
+	spellTableDiv <= html.INPUT(
+			id = stID + "`AttackBonus", Class = "spellTableStatistic",
+			type = "number", readonly = ''
+	)
+	spellTableDiv <= html.LABEL("Spell Save D.C.", For = stID + "`SpellSaveDC")
+	spellTableDiv <= html.INPUT(
+			id = stID + "`SpellSaveDC", Class = "spellTableStatistic",
+			type = "number", readonly = ''
+	)
+	spellTableDiv <= html.LABEL("Prepared Spells", For = stID + "`PreparedSpells")
+	spellTableDiv <= html.INPUT(
+			id = stID + "`PreparedSpells", Class = "spellTableStatistic",
+			type = "number", min = 0
+	)
+
+	spellTableDiv <= html.LABEL(
+		"Edit Max Spell Slots", For = stID + "`ToggleMaxSlotEdit"
+	)
+	spellTableDiv <= html.INPUT(id = stID + "`ToggleMaxSlotEdit", type = "checkbox")
+	spellTableDiv <= html.INPUT(
+		id = stID + "`SetMaxSpellLevel", type = "button",
+		value = "Set Maximum Spell Level"
+	)
+
+	document["spellTablesDiv"] <= spellTableDiv
+	refreshSpellTableStatistics(className)
+	updateSpellTableSlots(className)
+
+def updateSpellTables():
+	for d in document.select(".spellTable"):
+		del document[d.id]
+	for c in data["spells"]:
+		print(c)
+		if c not in data["biography"]["class"]:
+			continue
+
+		updateSpellTable(c)
+
 # GENERAL/NETWORK/OTHER FUNCTIONS
 def changePalette(event):
 	newPalette = document["palette"].value
@@ -1656,6 +1826,7 @@ def reloadValues(refreshTables = True):
 		updateSkillsTable()
 		updateFeaturesTable()
 		updateItemsTable()
+		updateSpellTables()
 
 def jsonHandler(response):
 	global data

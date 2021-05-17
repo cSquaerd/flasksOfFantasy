@@ -310,3 +310,18 @@ def listEntryDelete(item : str, itemType : str) -> dialog.Dialog:
 	)
 	
 	return d
+
+def spellTableCreate() -> dialog.Dialog:
+	d = dialog.Dialog("Create Spell Table", ok_cancel = True, default_css = False)
+	d.panel <= html.P("Select an ability to be the source of magical power:")
+	for a in ("intelligence", "wisdom", "charisma"):
+		d.panel <= html.INPUT(
+			id = a + "`spellTableAbilityRadio", name = "ability", value = a,
+			type = "radio"
+		)
+		d.panel <= html.LABEL(a.capitalize(), For = a + "`spellTableAbilityRadio")
+		d.panel <= html.BR()
+	
+	d.panel <= html.P("Select a class that does not yet have a spell table:")
+
+	return d
