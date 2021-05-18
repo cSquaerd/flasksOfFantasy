@@ -323,6 +323,8 @@ def refreshAbilityScores(initial = False):
 		refreshArmorDisplay()
 		updateSkillsTable()
 		updateItemsTable()
+		for k in data["spells"].keys():
+			refreshSpellTableStatistics(k)
 		#print("Refresh complete.")
 
 def syncAbilityScore(ability : str, newValue : int):
@@ -1593,17 +1595,13 @@ def adjustSpellTable(event):
 			className = ''
 			spellcastingAbility = ''
 			for r in createDialog.select("input[name = \"class\"]"):
-				#print(r)
 				if r.checked:
 					className = r.value
 					break
 			for r in createDialog.select("input[name = \"ability\"]"):
-				#print(r)
 				if r.checked:
 					spellcastingAbility = r.value
 					break
-
-			print(className, spellcastingAbility)
 
 			if className == '' or spellcastingAbility == '':
 				return
@@ -1638,13 +1636,46 @@ def adjustSpell(event):
 		method = "Edit"
 	else:
 		spell = event.target.id.split('`')[3]
+	
+	if method == "Delete":
+		deleteSpellDialog = listEntryDelete(spell, "spell")
 
-	if method == "Edit":
+		def deleteHandler(event):
+			del spellbook[spell]
+			deleteSpellDialog.close()
+			updateSpellTableSpells(className)
+
+		deleteSpellDialog.ok_button.bind("click", deleteHandler)
+
+	elif method == "Edit":
 		editSpellDialog = spellEdit(spell)
 		if not creatingSpell:
-			pass
-		else:
-			pass
+			editSpellDialog.select("#name")[0].value = spell
+			editSpellDialog.select("#description")[0].value = \
+				spellbook[spell]["description"]
+			editSpellDialog.select("#level")[0].value = \
+				spellbook[spell]["slot"]
+			editSpellDialog.select("#school")[0].value = \
+				spellbook[spell]["school"]
+			for stat in ("range", "casting", "duration"):
+				editSpellDialog.select('#' + stat + "Measure")[0].value = \
+					int(spellbook[spell][stat].split('`')[0])
+				editSpellDialog.select('#' + stat + "Unit")[0].value = \
+					spellbook[spell][stat].split('`')[1]
+
+			if spellbook[spell]["damage"]["type"] != "none":
+				editSpellDialog.select("#damageCheckbox")[0].checked = True
+				editSpellDialog.select("#damageCheckbox")[0].dispatchEvent(
+					window.Event.new("change")
+				)
+				editSpellDialog.select("#damageCount")[0].value = int(
+					spellbook[spell]["damage"]["count"]
+				)
+				editSpellDialog.select("#damageDie")[0].value = int(
+					spellbook[spell]["damage"]["die"]
+				)
+				editSpellDialog.select("#damageType")[0].value = \
+					spellbook[spell]["damage"]["type"]
 
 		def okHandler(e):
 			spellName = editSpellDialog.select("#name")[0].value
@@ -1672,8 +1703,6 @@ def adjustSpell(event):
 				and int(editSpellDialog.select("#rangeMeasure")[0].value) < 1:
 				print("Range measure must be non-zero!")
 				return
-
-			print("OK!")
 
 			spellDict = {
 				"slot": int(editSpellDialog.select("#level")[0].value),
@@ -1704,7 +1733,6 @@ def adjustSpell(event):
 			updateSpellTableSpells(className)
 
 		editSpellDialog.ok_button.bind("click", okHandler)
-
 
 def adjustMaxSpellLevel(className : str):
 	spellTableData = data["spells"][className]
@@ -1740,6 +1768,83 @@ def adjustMaxSpellLevel(className : str):
 			updateSpellTableSlots(className)
 
 	d.ok_button.bind("click", okHandler)
+
+def checkSpellField(event):
+	className = event.target.id.split('`')[0]
+	field = event.target.id.split('`')[2]
+	if "Slots" in field:
+		field += event.target.id.split('`')[3]
+
+	referenceValue = 0
+	balanceSlots = False
+	if "Max" in field:
+		balanceSlots = True
+		referenceValue = 1
+
+	try:
+		if int(event.target.value) < referenceValue:
+			print(className + ' ' + field + " must be non-negative!")
+			event.target.value = referenceValue
+			return
+	except ValueError:
+		print(className + ' ' + field +  " must be an integer!")
+		event.target.value = referenceValue
+		return
+
+	if "Prepared" in field:
+		data["spells"][className]["prepared"] = int(event.target.value)
+	else:
+		levelKey = event.target.id.split('`')[3]
+		if "Current" in field:
+			data["spells"][className]["slots"][levelKey]["current"] = int(
+				event.target.value
+			)
+		else:
+			data["spells"][className]["slots"][levelKey]["max"] = int(
+				event.target.value
+			)
+
+	if balanceSlots:
+		currentID = className + "`SpellTable`SlotsCurrent`" \
+			+ event.target.id.split('`')[3]
+		document[currentID].max = int(event.target.value)
+		if int(document[currentID].value) > int(event.target.value):
+			document[currentID].value = int(event.target.value)
+			data["spells"][className]["slots"][levelKey]["current"] = int(
+				event.target.value
+			)
+
+
+def toggleMaxSlotEdit(event):
+	className = event.target.id.split('`')[0]
+	for i in document.select('.' + className + "SlotMax"):
+		if event.target.checked:
+			del i.attrs["readonly"]
+		else:
+			i.attrs["readonly"] = ''
+
+def deleteSpellTableHandler(event):
+	className = event.target.id.split('`')[0]
+	d = listEntryDelete(className, "spell table")
+
+	def deleteHandler(e):
+		def forSureDeleteHandler(E):
+			del data["spells"][className]
+			confirmDelete.close()
+			updateSpellTables()
+
+		confirmDelete = dialog.Dialog(
+			"Confirm Spell Table Deletion",
+			ok_cancel = ("Yes", "No"), default_css = False
+		)
+		confirmDelete.panel <= html.B(
+			"Are you absolutely sure you wish to delete the \"" \
+				+ className + "\" spell table?"
+		)
+		confirmDelete.ok_button.bind("click", forSureDeleteHandler)
+		d.close()
+	
+	d.ok_button.bind("click", deleteHandler)
 
 def calculateSpellAttackBonus(ability : str) -> int:
 	return int(document[ability + "Bonus"].value) + data["proficiency"]["bonus"]
@@ -1784,25 +1889,25 @@ def updateSpellTableSlots(className : str):
 	currentRow = html.TR()
 	currentRow <= html.TD(html.B("Current Slots"))
 	for k in sorted(spellTableData["slots"].keys()):
-		currentRow <= html.TD(
-			html.INPUT(
-				id = stID + "`SlotsCurrent`" + k, type = "number",
-				min = 0, max = spellTableData["slots"][k]["max"],
-				value = spellTableData["slots"][k]["current"]
-			)
+		temp = html.INPUT(
+			id = stID + "`SlotsCurrent`" + k, type = "number",
+			min = 0, max = spellTableData["slots"][k]["max"],
+			value = spellTableData["slots"][k]["current"]
 		)
+		temp.bind("input", checkSpellField)
+		currentRow <= html.TD(temp)
 	tableBody <= currentRow
 
 	maxRow = html.TR()
 	maxRow <= html.TD(html.B("Max Slots"))
 	for k in sorted(spellTableData["slots"].keys()):
-		maxRow <= html.TD(
-			html.INPUT(
-				id = stID + "`SlotsMax`" + k, type = "number", min = 1,
-				value = spellTableData["slots"][k]["max"],
-				readonly = ''
-			)
+		temp = html.INPUT(
+			id = stID + "`SlotsMax`" + k, Class = className + "SlotMax",
+			type = "number", min = 1, value = spellTableData["slots"][k]["max"],
+			readonly = ''
 		)
+		temp.bind("input", checkSpellField)
+		maxRow <= html.TD(temp)
 	tableBody <= maxRow
 
 	table <= tableHeader
@@ -1818,7 +1923,6 @@ def updateSpellTableSpells(className : str):
 	table = document[stID + "`SpellbookTableBody"]
 
 	for row in document.select("tr." + className + "Spell"):
-		print("Deleting", row.id)
 		del document[row.id]
 
 	for k in sorted(sorted(spellbook.keys()), key = lambda s : spellbook[s]["slot"]):
@@ -1856,21 +1960,29 @@ def updateSpellTableSpells(className : str):
 			row <= html.TD()
 
 		settingsCell = html.TD()
-		settingsCell <= html.INPUT(
+	
+		spellEditButton = html.INPUT(
 			id = stID + "`Edit`" + k, type = "button", value = "Edit"
 		)
-		settingsCell <= html.INPUT(
+		spellEditButton.bind("click", adjustSpell)
+		settingsCell <= spellEditButton
+
+		spellDeleteButton= html.INPUT(
 			id = stID + "`Delete`" + k, type = "button", value = "Delete"
 		)
+		spellDeleteButton.bind("click", adjustSpell)
+		settingsCell <= spellDeleteButton
+
 		row <= settingsCell
 
 		table <= row
 
 def updateSpellTable(className : str):
 	stID = className + "`SpellTable"
+	spellcastingAbility = data["spells"][className]["ability"]
 
 	spellTableDiv = html.DIV(Class = "spellTable", id = stID)
-	spellTableDiv <= html.H3(className)
+	spellTableDiv <= html.H3(className + " (" + spellcastingAbility[:3].upper() + ')')
 
 	spellTableDiv <= html.LABEL("Spell Attack Bonus", For = stID + "`AttackBonus")
 	spellTableDiv <= html.INPUT(
@@ -1883,21 +1995,33 @@ def updateSpellTable(className : str):
 			type = "number", readonly = ''
 	)
 	spellTableDiv <= html.LABEL("Prepared Spells", For = stID + "`PreparedSpells")
-	spellTableDiv <= html.INPUT(
+	preparedSpells = html.INPUT(
 			id = stID + "`PreparedSpells", Class = "spellTableStatistic",
 			type = "number", min = 0
 	)
+	preparedSpells.bind("input", checkSpellField)
+	spellTableDiv <= preparedSpells
 
 	spellTableDiv <= html.LABEL(
 		"Edit Max Spell Slots", For = stID + "`ToggleMaxSlotEdit"
 	)
-	spellTableDiv <= html.INPUT(id = stID + "`ToggleMaxSlotEdit", type = "checkbox")
+	maxSlotEditCheckbox = html.INPUT(id = stID + "`ToggleMaxSlotEdit", type = "checkbox")
+	maxSlotEditCheckbox.bind("change", toggleMaxSlotEdit)
+	spellTableDiv <= maxSlotEditCheckbox
+
 	setMaxSpellLevelButton = html.INPUT(
 		id = stID + "`SetMaxSpellLevel", type = "button",
 		value = "Set Maximum Spell Level"
 	)
 	setMaxSpellLevelButton.bind("click", lambda e : adjustMaxSpellLevel(className))
 	spellTableDiv <= setMaxSpellLevelButton
+
+	deleteSpellTableButton = html.INPUT(
+		id = stID + "`Delete", Class = "spellTableDeleteButton",
+		type = "button", value = "Delete Spell Table"
+	)
+	deleteSpellTableButton.bind("click", deleteSpellTableHandler)
+	spellTableDiv <= deleteSpellTableButton
 
 	spellTableDiv <= html.TABLE(id = stID + "`SlotsTable")
 
@@ -1931,7 +2055,6 @@ def updateSpellTables():
 	for d in document.select(".spellTable"):
 		del document[d.id]
 	for c in sorted(data["spells"].keys()):
-		print(c)
 		if c not in data["biography"]["class"]:
 			continue
 
@@ -2021,6 +2144,9 @@ def reloadValues(refreshTables = True):
 		updateFeaturesTable()
 		updateItemsTable()
 		updateSpellTables()
+
+	for k in data["spells"].keys():
+		refreshSpellTableStatistics(k)
 
 def jsonHandler(response):
 	global data

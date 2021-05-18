@@ -115,29 +115,5 @@ defaultSheet = {
 			}
 		}
 	},
-	"spells": {
-		"class": {
-			"save": 0,
-			"attack": 0,
-			"slots": {
-				"1": {
-					"current": 0,
-					"max": 1
-				}
-			},
-			"spells": {
-				"spell": {
-					"slot": 1,
-					"description": '',
-					"range": '',
-					"duration": '',
-					"damage": {
-						"type": "none",
-						"die": 0,
-						"count": 0
-					}
-				}
-			}
-		}
-	}
+	"spells": {}
 }
