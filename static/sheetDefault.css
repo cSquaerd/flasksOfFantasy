@@ -110,12 +110,24 @@ td.itemDesc {
 	width: 30%;
 }
 
+td.spellLevel {
+	width: 8%;
+}
+
 td.spellName {
-	width: 12%;
+	width: 17%;
 }
 
 td.spellDescription {
 	width: 33%;
+}
+
+td.spellStatistic {
+	width: 6%;
+}
+
+td.spellDamage {
+	width: 12%;
 }
 
 input, select, .brython-dialog-button {

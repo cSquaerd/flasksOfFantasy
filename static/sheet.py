@@ -1680,7 +1680,10 @@ def adjustSpell(event):
 		def okHandler(e):
 			spellName = editSpellDialog.select("#name")[0].value
 			if creatingSpell and spellName in spellbook.keys():
-				print("Spell already exists!")
+				dialog.InfoDialog(
+					"Spell Name Error", "Spell \"" + spellName + "\" already exists!",
+					remove_after = 4, default_css = False
+				)
 				return
 			
 			for field in (
@@ -1693,15 +1696,27 @@ def adjustSpell(event):
 							"#castingMeasure", "#damageCount", "#damageDie"
 						) else 1 if field != "#damageDie" else 4
 					):
-						print(field.split('#')[1] + " must be non-negative!")
+						dialog.InfoDialog(
+							"Spell Data Error",
+							field.split('#')[1] + " must be non-negative!",
+							remove_after = 4, default_css = False
+						)
 						return
 				except ValueError:
-					print(field.split('#')[1] + " must be an integer!")
+					dialog.InfoDialog(
+						"Spell Data Error",
+						field.split('#')[1] + " must be an integer!",
+						remove_after = 4, default_css = False
+					)
 					return
 
 			if editSpellDialog.select("#rangeUnit")[0].value == "feet" \
 				and int(editSpellDialog.select("#rangeMeasure")[0].value) < 1:
-				print("Range measure must be non-zero!")
+				dialog.InfoDialog(
+					"Spell Range Error",
+					"Range measure must be non-zero!",
+					remove_after = 4, default_css = False
+				)
 				return
 
 			spellDict = {
@@ -1729,6 +1744,8 @@ def adjustSpell(event):
 				}
 
 			spellbook[spellName] = spellDict
+			if not creatingSpell and spellName != spell:
+				del spellbook[spell]
 			editSpellDialog.close()
 			updateSpellTableSpells(className)
 
@@ -1742,22 +1759,27 @@ def adjustMaxSpellLevel(className : str):
 		try:
 			newMax = int(d.select("#newMaxSpellLevel")[0].value)
 		except ValueError:
+			dialog.InfoDialog(
+				"Max Spell Level Error",
+				"Value must be an integer!",
+				remove_after = 4, default_css = False
+			)
 			return
 
 		if newMax < 1 or newMax > 9:
-			#print("OUT OF BOUNDS")
+			dialog.InfoDialog(
+				"Max Spell Level Error",
+				"Value out of bounds!",
+				remove_after = 4, default_css = False
+			)
 			return
 		
 		oldMax = len(spellTableData["slots"].keys())
 		if newMax < oldMax:
-			#print("LESS")
 			for l in range(newMax + 1, oldMax + 1):
-				#print(l)
 				del spellTableData["slots"][str(l)]
 		elif newMax > oldMax:
-			#print("MORE")
 			for l in range(oldMax + 1, newMax + 1):
-				#print(l)
 				spellTableData["slots"][str(l)] = {
 					"current": 1,
 					"max": 1
@@ -1783,11 +1805,19 @@ def checkSpellField(event):
 
 	try:
 		if int(event.target.value) < referenceValue:
-			print(className + ' ' + field + " must be non-negative!")
+			dialog.InfoDialog(
+				"Spell Table Data Error",
+				className + ' ' + field + " must be non-negative!",
+				remove_after = 4, default_css = False
+			)
 			event.target.value = referenceValue
 			return
 	except ValueError:
-		print(className + ' ' + field +  " must be an integer!")
+		dialog.InfoDialog(
+			"Spell Table Data Error",
+			className + ' ' + field + " must be an integer!",
+			remove_after = 4, default_css = False
+		)
 		event.target.value = referenceValue
 		return
 
@@ -1902,7 +1932,7 @@ def updateSpellTableSlots(className : str):
 	maxRow <= html.TD(html.B("Max Slots"))
 	for k in sorted(spellTableData["slots"].keys()):
 		temp = html.INPUT(
-			id = stID + "`SlotsMax`" + k, Class = className + "SlotMax, slotInput",
+			id = stID + "`SlotsMax`" + k, Class = className + "SlotMax slotInput",
 			type = "number", min = 1, value = spellTableData["slots"][k]["max"],
 			readonly = ''
 		)
@@ -1935,7 +1965,8 @@ def updateSpellTableSpells(className : str):
 				str(spell["slot"])
 				if spell["slot"] > 0
 				else "Cantrip"
-			) + ", " + spell["school"].capitalize()
+			) + ", " + spell["school"].capitalize(),
+			Class = "spellLevel"
 		)
 
 		row <= html.TD(html.H3(k), Class = "spellName")
@@ -1952,14 +1983,14 @@ def updateSpellTableSpells(className : str):
 			elif unit == "self":
 				s = label.split('`')[0] + " Feet from Self"
 
-			row <= html.TD(s)
+			row <= html.TD(s, Class = "spellStatistic")
 
 		if spell["damage"]["type"] != "none":
-			row <= html.TD(makeSpellDamageString(spell["damage"]))
+			row <= html.TD(makeSpellDamageString(spell["damage"]), Class = "spellDamage")
 		else:
 			row <= html.TD()
 
-		settingsCell = html.TD()
+		settingsCell = html.TD(Class = "spellSettings")
 	
 		spellEditButton = html.INPUT(
 			id = stID + "`Edit`" + k, type = "button", value = "Edit"
