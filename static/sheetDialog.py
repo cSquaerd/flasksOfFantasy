@@ -338,3 +338,44 @@ def spellTableSetMaxLevel(className : str, currentMaxLevel : int) -> dialog.Dial
 	)
 
 	return d
+
+def spellEdit(spell : str) -> dialog.Dialog:
+	d = dialog.Dialog(spell, ok_cancel = True, default_css = False)
+
+	d.panel <= html.LABEL("Spell Name:", For = "name")
+	d.panel <= html.INPUT(id = "name", Class = "dialogName")
+	d.panel <= html.BR()
+	d.panel <= html.LABEL("Spell Description:", For = "description")
+	d.panel <= html.INPUT(id = "description")
+	d.panel <= html.BR()
+
+	d.panel <= html.LABEL("Spell Range (Measure, Unit):", For = "rangeMeasure")
+	d.panel <= html.INPUT(id = "rangeMeasure", type = "number", min = 0, value = 0)
+	rangeUnit = html.SELECT(id = "rangeUnit", name = "rangeUnit")
+	for unit in ("feet", "touch", "self"):
+		rangeUnit <= html.OPTION(unit.capitalize(), value = unit)
+	d.panel <= rangeUnit
+	d.panel <= html.BR()
+	d.panel <= html.P(
+		"For touch and non-AoE self ranges, leave the Measure field at 0."
+	)
+	d.panel <= html.BR()
+
+	d.panel <= html.LABEL("Spell Duration (Measure, Unit):", For = "durationMeasure")
+	d.panel <= html.INPUT(id = "durationMeasure", type = "number", min = 0, value = 0)
+	durationUnit = html.SELECT(id = "durationUnit", name = "durationUnit")
+	for unit in (
+		"days", "hours", "minutes", "rounds",
+		"days, Concentration", "hours, Concentration",
+		"minutes, Concentration", "rounds, Concentration",
+		"instantaneous", "until dispelled", "special"
+	):
+		durationUnit <= html.OPTION(unit.capitalize(), value = unit)
+	d.panel <= durationUnit
+	d.panel <= html.BR()
+	d.panel <= html.P(
+		"For instantaneous, until dispelled, or special durations, leave the Measure field at 0."
+	)
+	d.panel <= html.BR()
+
+	return d

@@ -1626,6 +1626,12 @@ def adjustSpellTable(event):
 
 document["Create Spell List``NewTable"].bind("click", adjustSpellTable)
 
+def adjustSpell(event):
+	className = event.target.id.split('`')[0]
+	method = event.target.id.split('`')[2]
+	print(method)
+	d = spellEdit("Create New " + className + " Spell")
+
 def adjustMaxSpellLevel(className : str):
 	spellTableData = data["spells"][className]
 	d = spellTableSetMaxLevel(className, len(spellTableData["slots"].keys()))
@@ -1729,7 +1735,47 @@ def updateSpellTableSlots(className : str):
 	table <= tableBody
 
 def updateSpellTableSpells(className : str):
+	def makeSpellDamageString(damageDict : dict) -> str:
+		return str(damageDict["count"]) + 'd' + str(damageDict["die"]) + ' ' \
+			+ damageDict["type"]
+
 	stID = className + "`SpellTable"
+	spellbook = data["spells"][className]["spells"]
+	table = document[stID + "`SpellbookTableBody"]
+
+	for spell in table.select('.' + className + "Spell"):
+		del document[spell.id]
+
+	for spell in sorted(spellbook.keys(), key = lambda s : s["slot"]):
+		row = html.TR(
+			id = stID + "`Spell`" + spell, Class = '.' + className + "Spell"
+		)
+		row <= html.TD(
+			str(spell["slot"])
+			if spell["slot"] > 0
+			else "Cantrip"
+		)
+
+		row <= html.TD(html.H4(spell))
+
+		for label in (spell["description"], spell["range"], spell["duration"]):
+			row <= html.TD(label)
+
+		if spell["damage"]["type"] != "none":
+			row <= html.TD(makeSpellDamageString(spell["damage"]))
+		else:
+			row <= html.TD()
+
+		settingsCell = html.TD()
+		settingsCell <= html.INPUT(
+			id = stID + "`Edit`" + spell, type = "button", value = "Edit"
+		)
+		settingsCell <= html.INPUT(
+			id = stID + "`Delete`" + spell, type = "button", value = "Delete"
+		)
+		row <= settingsCell
+
+		table <= row
 
 def updateSpellTable(className : str):
 	stID = className + "`SpellTable"
@@ -1766,9 +1812,30 @@ def updateSpellTable(className : str):
 
 	spellTableDiv <= html.TABLE(id = stID + "`SlotsTable")
 
+	newSpellButton = html.INPUT(
+		id = stID + "`New", Class = "createSpellButton",
+		type = "button", value = "Create Spell"
+	)
+	newSpellButton.bind("click", adjustSpell)
+	spellTableDiv <= newSpellButton
+
+	spellbookTable = html.TABLE(id = stID + "`SpellbookTable")
+	spellbookTableHeader = html.THEAD()
+	
+	for column in (
+		"Level", "Spell", "Description", "Range",
+		"Duration", "Damage (optional)", "Settings"
+	):
+		spellbookTableHeader <= html.TH(column)
+	spellbookTable <= spellbookTableHeader
+
+	spellbookTable <= html.TBODY(id = stID + "`SpellbookTableBody")
+	spellTableDiv <= spellbookTable
+
 	document["spellTablesDiv"] <= spellTableDiv
 	refreshSpellTableStatistics(className)
 	updateSpellTableSlots(className)
+	updateSpellTableSpells(className)
 
 def updateSpellTables():
 	for d in document.select(".spellTable"):
