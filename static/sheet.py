@@ -1629,8 +1629,82 @@ document["Create Spell List``NewTable"].bind("click", adjustSpellTable)
 def adjustSpell(event):
 	className = event.target.id.split('`')[0]
 	method = event.target.id.split('`')[2]
-	print(method)
-	d = spellEdit("Create New " + className + " Spell")
+	spellbook = data["spells"][className]["spells"]
+	creatingSpell = False
+
+	if method == "New":
+		spell = "Create New " + className + " Spell"
+		creatingSpell = True
+		method = "Edit"
+	else:
+		spell = event.target.id.split('`')[3]
+
+	if method == "Edit":
+		editSpellDialog = spellEdit(spell)
+		if not creatingSpell:
+			pass
+		else:
+			pass
+
+		def okHandler(e):
+			spellName = editSpellDialog.select("#name")[0].value
+			if creatingSpell and spellName in spellbook.keys():
+				print("Spell already exists!")
+				return
+			
+			for field in (
+				"#level", "#rangeMeasure", "#castingMeasure",
+				"#durationMeasure", "#damageCount", "#damageDie"
+			):
+				try:
+					if int(editSpellDialog.select(field)[0].value) < (
+						0 if field not in (
+							"#castingMeasure", "#damageCount", "#damageDie"
+						) else 1 if field != "#damageDie" else 4
+					):
+						print(field.split('#')[1] + " must be non-negative!")
+						return
+				except ValueError:
+					print(field.split('#')[1] + " must be an integer!")
+					return
+
+			if editSpellDialog.select("#rangeUnit")[0].value == "feet" \
+				and int(editSpellDialog.select("#rangeMeasure")[0].value) < 1:
+				print("Range measure must be non-zero!")
+				return
+
+			print("OK!")
+
+			spellDict = {
+				"slot": int(editSpellDialog.select("#level")[0].value),
+				"school": editSpellDialog.select("#school")[0].value,
+				"description": editSpellDialog.select("#description")[0].value,
+				"range": editSpellDialog.select("#rangeMeasure")[0].value + '`' \
+					+ editSpellDialog.select("#rangeUnit")[0].value,
+				"casting": editSpellDialog.select("#castingMeasure")[0].value + '`' \
+					+ editSpellDialog.select("#castingUnit")[0].value,
+				"duration": editSpellDialog.select("#durationMeasure")[0].value + '`' \
+					+ editSpellDialog.select("#durationUnit")[0].value,
+			}
+			if editSpellDialog.select("#damageCheckbox")[0].checked:
+				spellDict["damage"] = {
+					"type": editSpellDialog.select("#damageType")[0].value,
+					"die": int(editSpellDialog.select("#damageDie")[0].value),
+					"count": int(editSpellDialog.select("#damageCount")[0].value)
+				}
+			else:
+				spellDict["damage"] = {
+					"type": "none",
+					"die": 0,
+					"count": 0
+				}
+
+			spellbook[spellName] = spellDict
+			editSpellDialog.close()
+			updateSpellTableSpells(className)
+
+		editSpellDialog.ok_button.bind("click", okHandler)
+
 
 def adjustMaxSpellLevel(className : str):
 	spellTableData = data["spells"][className]
@@ -1743,23 +1817,38 @@ def updateSpellTableSpells(className : str):
 	spellbook = data["spells"][className]["spells"]
 	table = document[stID + "`SpellbookTableBody"]
 
-	for spell in table.select('.' + className + "Spell"):
-		del document[spell.id]
+	for row in document.select("tr." + className + "Spell"):
+		print("Deleting", row.id)
+		del document[row.id]
 
-	for spell in sorted(spellbook.keys(), key = lambda s : s["slot"]):
+	for k in sorted(sorted(spellbook.keys()), key = lambda s : spellbook[s]["slot"]):
+		spell = spellbook[k]
 		row = html.TR(
-			id = stID + "`Spell`" + spell, Class = '.' + className + "Spell"
+			id = stID + "`Spell`" + k, Class = className + "Spell"
 		)
 		row <= html.TD(
-			str(spell["slot"])
-			if spell["slot"] > 0
-			else "Cantrip"
+			(
+				str(spell["slot"])
+				if spell["slot"] > 0
+				else "Cantrip"
+			) + ", " + spell["school"].capitalize()
 		)
 
-		row <= html.TD(html.H4(spell))
+		row <= html.TD(html.H4(k))
+		row <= html.TD(spell["description"])
 
-		for label in (spell["description"], spell["range"], spell["duration"]):
-			row <= html.TD(label)
+		for label in (spell["range"], spell["casting"], spell["duration"]):
+			s = ' '.join(map(str.capitalize, label.split('`')))
+
+			unit = label.split('`')[1]
+			if unit in (
+				"instantaneous", "until Dispelled", "special", "touch"
+			) or unit == "self" and int(label.split('`')[0]) == 0:
+				s = unit.capitalize()
+			elif unit == "self":
+				s = label.split('`')[0] + " Feet from Self"
+
+			row <= html.TD(s)
 
 		if spell["damage"]["type"] != "none":
 			row <= html.TD(makeSpellDamageString(spell["damage"]))
@@ -1768,10 +1857,10 @@ def updateSpellTableSpells(className : str):
 
 		settingsCell = html.TD()
 		settingsCell <= html.INPUT(
-			id = stID + "`Edit`" + spell, type = "button", value = "Edit"
+			id = stID + "`Edit`" + k, type = "button", value = "Edit"
 		)
 		settingsCell <= html.INPUT(
-			id = stID + "`Delete`" + spell, type = "button", value = "Delete"
+			id = stID + "`Delete`" + k, type = "button", value = "Delete"
 		)
 		row <= settingsCell
 
@@ -1824,7 +1913,8 @@ def updateSpellTable(className : str):
 	
 	for column in (
 		"Level", "Spell", "Description", "Range",
-		"Duration", "Damage (optional)", "Settings"
+		"Casting Time", "Duration",
+		"Damage (optional)", "Settings"
 	):
 		spellbookTableHeader <= html.TH(column)
 	spellbookTable <= spellbookTableHeader

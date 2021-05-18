@@ -340,6 +340,13 @@ def spellTableSetMaxLevel(className : str, currentMaxLevel : int) -> dialog.Dial
 	return d
 
 def spellEdit(spell : str) -> dialog.Dialog:
+	def toggleDamage(event):
+		for i in d.select(".damage"):
+			if event.target.checked:
+				del i.attrs["readonly"]
+			else:
+				i.attrs["readonly"] = ''
+
 	d = dialog.Dialog(spell, ok_cancel = True, default_css = False)
 
 	d.panel <= html.LABEL("Spell Name:", For = "name")
@@ -347,6 +354,18 @@ def spellEdit(spell : str) -> dialog.Dialog:
 	d.panel <= html.BR()
 	d.panel <= html.LABEL("Spell Description:", For = "description")
 	d.panel <= html.INPUT(id = "description")
+	d.panel <= html.BR()
+
+	d.panel <= html.LABEL("Spell Level:", For = "level")
+	d.panel <= html.INPUT(id = "level", type = "number", min = 0, max = 9, value = 0)
+	d.panel <= html.LABEL("Spell School:", For = "school")
+	spellSchool = html.SELECT(id = "school", name = "school")
+	for school in (
+		"abjuration", "conjuration", "divination", "enchantment",
+		"evocation", "illusion", "necromancy", "transmutation"
+	):
+		spellSchool <= html.OPTION(school.capitalize(), value = school)
+	d.panel <= spellSchool
 	d.panel <= html.BR()
 
 	d.panel <= html.LABEL("Spell Range (Measure, Unit):", For = "rangeMeasure")
@@ -361,6 +380,14 @@ def spellEdit(spell : str) -> dialog.Dialog:
 	)
 	d.panel <= html.BR()
 
+	d.panel <= html.LABEL("Spell Casting Time (Measure, Unit):", For = "castingMeasure")
+	d.panel <= html.INPUT(id = "castingMeasure", type = "number", min = 1, value = 1)
+	castingUnit = html.SELECT(id = "castingUnit", name = "castingUnit")
+	for unit in ("bonus Action", "action", "minutes", "hours"):
+		castingUnit <= html.OPTION(unit.capitalize(), value = unit)
+	d.panel <= castingUnit
+	d.panel <= html.BR()
+
 	d.panel <= html.LABEL("Spell Duration (Measure, Unit):", For = "durationMeasure")
 	d.panel <= html.INPUT(id = "durationMeasure", type = "number", min = 0, value = 0)
 	durationUnit = html.SELECT(id = "durationUnit", name = "durationUnit")
@@ -368,7 +395,7 @@ def spellEdit(spell : str) -> dialog.Dialog:
 		"days", "hours", "minutes", "rounds",
 		"days, Concentration", "hours, Concentration",
 		"minutes, Concentration", "rounds, Concentration",
-		"instantaneous", "until dispelled", "special"
+		"instantaneous", "until Dispelled", "special"
 	):
 		durationUnit <= html.OPTION(unit.capitalize(), value = unit)
 	d.panel <= durationUnit
@@ -377,5 +404,25 @@ def spellEdit(spell : str) -> dialog.Dialog:
 		"For instantaneous, until dispelled, or special durations, leave the Measure field at 0."
 	)
 	d.panel <= html.BR()
+
+	d.panel <= html.LABEL("Does Damage?", For = "damageCheckbox")
+	damageCheckbox = html.INPUT(id = "damageCheckbox", type = "checkbox")
+	damageCheckbox.bind("change", toggleDamage)
+	d.panel <= damageCheckbox
+	d.panel <= html.BR()
+
+	d.panel <= html.LABEL("Damage Dice Count:", For = "damageCount")
+	d.panel <= html.INPUT(
+		id = "damageCount", Class = "damage",
+		type = "number", min = 1, value = 1, readonly = ''
+	)
+	d.panel <= html.LABEL("Damage Dice Value:", For = "damageDie")
+	d.panel <= html.INPUT(
+		id = "damageDie", Class = "damage",
+		type = "number", min = 4, value = 4, readonly = ''
+	)
+	d.panel <= html.BR()
+	d.panel <= html.LABEL("Damage Type:", For = "damageType")
+	d.panel <= html.INPUT(id = "damageType", Class = "damage", readonly = '')
 
 	return d

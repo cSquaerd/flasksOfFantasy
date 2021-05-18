@@ -199,7 +199,7 @@ input[type = "button"]:active:not([disabled]), .brython-dialog-button:active, bu
 	box-shadow: 0px 0px;
 }
 
-input.dialogName, #classList, #class.bio {
+input.dialogName, #classList, #class.bio, input#damageType {
 	width: 240px;
 }
 
