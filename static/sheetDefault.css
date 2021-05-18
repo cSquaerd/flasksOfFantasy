@@ -71,6 +71,11 @@ table {
 
 table.slotsTable{
 	width: auto;
+	margin-bottom: 8px;
+}
+
+table.slotsTable, table.spellbookTable {
+	margin-top: 8px;
 }
 
 th {
@@ -86,7 +91,7 @@ td {
 	border-color: var(--colorTableDataBorder);
 }
 
-td.tdWithInput {
+td.tdWithInput, td.spellSettings {
 	text-align: center;
 }
 

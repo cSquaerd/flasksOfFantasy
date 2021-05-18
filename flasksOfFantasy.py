@@ -346,7 +346,8 @@ def userpage():
 			return fl.jsonify(noJSONError)
 
 def index():
-	return "<h1>Hello World!</h1>"
+	#return "<h1>Hello World!</h1>"
+	return fl.render_template("index.html")
 
 # App Rule Instanctiation
 base.add_url_rule('/', "index", index)

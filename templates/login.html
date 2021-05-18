@@ -4,10 +4,11 @@
 		<script src = {{url_for("static", filename = "brython/brython.js")}}></script>
 		<script src = {{url_for("static", filename = "brython/brython_stdlib.js")}}></script>
 		<meta charset = "utf-8">
+		<link rel = "stylesheet" href = {{url_for("static", filename = "generic.css")}}>
 	</head>
 	<body onload = "brython()">
 		<script type="text/python" src = {{url_for("static", filename = "login.py")}}></script>
-		<h2>Login:</h2> <br>
+		<h2>Flasks of Fantasy Login:</h2> <br>
 		<label for = "user">Username:</label>
 		<input type = "text" id = "user"> <br>
 		<label for = "pass">Password:</label>

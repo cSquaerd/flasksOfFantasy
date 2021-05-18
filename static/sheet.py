@@ -2063,7 +2063,7 @@ def updateSpellTable(className : str):
 	newSpellButton.bind("click", adjustSpell)
 	spellTableDiv <= newSpellButton
 
-	spellbookTable = html.TABLE(id = stID + "`SpellbookTable")
+	spellbookTable = html.TABLE(id = stID + "`SpellbookTable", Class = "spellbookTable")
 	spellbookTableHeader = html.THEAD()
 	
 	for column in (
