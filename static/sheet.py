@@ -1890,8 +1890,8 @@ def updateSpellTableSlots(className : str):
 	currentRow <= html.TD(html.B("Current Slots"))
 	for k in sorted(spellTableData["slots"].keys()):
 		temp = html.INPUT(
-			id = stID + "`SlotsCurrent`" + k, type = "number",
-			min = 0, max = spellTableData["slots"][k]["max"],
+			id = stID + "`SlotsCurrent`" + k, Class = "slotInput",
+			type = "number", min = 0, max = spellTableData["slots"][k]["max"],
 			value = spellTableData["slots"][k]["current"]
 		)
 		temp.bind("input", checkSpellField)
@@ -1902,7 +1902,7 @@ def updateSpellTableSlots(className : str):
 	maxRow <= html.TD(html.B("Max Slots"))
 	for k in sorted(spellTableData["slots"].keys()):
 		temp = html.INPUT(
-			id = stID + "`SlotsMax`" + k, Class = className + "SlotMax",
+			id = stID + "`SlotsMax`" + k, Class = className + "SlotMax, slotInput",
 			type = "number", min = 1, value = spellTableData["slots"][k]["max"],
 			readonly = ''
 		)
@@ -1938,8 +1938,8 @@ def updateSpellTableSpells(className : str):
 			) + ", " + spell["school"].capitalize()
 		)
 
-		row <= html.TD(html.H4(k))
-		row <= html.TD(spell["description"])
+		row <= html.TD(html.H3(k), Class = "spellName")
+		row <= html.TD(spell["description"], Class = "spellDescription")
 
 		for label in (spell["range"], spell["casting"], spell["duration"]):
 			s = ' '.join(map(str.capitalize, label.split('`')))
@@ -1982,7 +1982,7 @@ def updateSpellTable(className : str):
 	spellcastingAbility = data["spells"][className]["ability"]
 
 	spellTableDiv = html.DIV(Class = "spellTable", id = stID)
-	spellTableDiv <= html.H3(className + " (" + spellcastingAbility[:3].upper() + ')')
+	spellTableDiv <= html.H2(className + " (" + spellcastingAbility[:3].upper() + ')')
 
 	spellTableDiv <= html.LABEL("Spell Attack Bonus", For = stID + "`AttackBonus")
 	spellTableDiv <= html.INPUT(
@@ -2023,7 +2023,7 @@ def updateSpellTable(className : str):
 	deleteSpellTableButton.bind("click", deleteSpellTableHandler)
 	spellTableDiv <= deleteSpellTableButton
 
-	spellTableDiv <= html.TABLE(id = stID + "`SlotsTable")
+	spellTableDiv <= html.TABLE(id = stID + "`SlotsTable", Class = "slotsTable")
 
 	newSpellButton = html.INPUT(
 		id = stID + "`New", Class = "createSpellButton",
@@ -2144,9 +2144,6 @@ def reloadValues(refreshTables = True):
 		updateFeaturesTable()
 		updateItemsTable()
 		updateSpellTables()
-
-	for k in data["spells"].keys():
-		refreshSpellTableStatistics(k)
 
 def jsonHandler(response):
 	global data

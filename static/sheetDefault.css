@@ -69,6 +69,10 @@ table {
 	width: 100%;
 }
 
+table.slotsTable{
+	width: auto;
+}
+
 th {
 	border-style: hidden dotted dotted dotted;
 	border-width: 4px;
@@ -106,6 +110,14 @@ td.itemDesc {
 	width: 30%;
 }
 
+td.spellName {
+	width: 12%;
+}
+
+td.spellDescription {
+	width: 33%;
+}
+
 input, select, .brython-dialog-button {
 	width: 100px;
 	font-family: ibm;
@@ -138,7 +150,7 @@ input:not([type]), input[type = "number"] {
 	padding: 8px 0px 4px 0px;
 }
 
-.tdWithInput>input:not([class]) {
+.tdWithInput>input:not([class]), .slotInput {
 	width: 60px;
 }
 
